@@ -1,0 +1,3 @@
+HeritageTune Then Web 1.1.3
+Frontend: Netlify
+Backend proxy: Render FastAPI via HERITAGETUNE_API_URL

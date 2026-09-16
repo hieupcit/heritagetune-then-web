@@ -1,0 +1,162 @@
+<!doctype html>
+<html lang="vi">
+<head>
+  <meta charset="utf-8"/>
+  <meta name="viewport" content="width=device-width, initial-scale=1"/>
+  <meta name="description" content="HeritageTune – nhận diện và truy xuất biến thể giai điệu hát Then"/>
+  <title>HeritageTune – Hát Then</title>
+  <link rel="stylesheet" href="/styles.css"/>
+</head>
+<body>
+<header class="topbar">
+  <div class="container brand">
+    <div class="mark">♪</div>
+    <div>
+      <h1>HeritageTune</h1>
+      <p>Nhận diện & truy xuất biến thể giai điệu hát Then • Netlify + Render</p>
+    </div>
+  </div>
+</header>
+
+<nav class="tabs container">
+  <button class="tab active" data-target="searchPane">Tra cứu</button>
+  <button class="tab" data-target="libraryPane">Kho tư liệu</button>
+  <button class="tab" data-target="researchPane">Đánh giá nghiên cứu</button>
+  <button class="tab" data-target="aboutPane">Giới thiệu</button>
+</nav>
+
+<main class="container">
+  <section id="searchPane" class="pane active">
+    <div class="grid two">
+      <article class="card accent">
+        <h2>1. Thu hoặc tải đoạn hát</h2>
+        <p class="muted">Khuyến nghị 10–30 giây, giọng hát rõ, ít lời nói và ít tạp âm.</p>
+
+        <div class="recorder">
+          <button id="recordBtn" class="btn primary">🎙 Bắt đầu thu</button>
+          <button id="stopBtn" class="btn" disabled>■ Dừng</button>
+          <span id="recTime" class="timer">00:00</span>
+        </div>
+
+        <div class="or">hoặc</div>
+        <input id="audioFile" type="file" accept="audio/*"/>
+        <audio id="preview" controls class="audio hidden"></audio>
+      </article>
+
+      <article class="card">
+        <h2>2. Chọn phương pháp</h2>
+        <select id="method">
+          <option value="ht_dtw">HT-DTW: cao độ tương đối + quãng + nhịp</option>
+          <option value="rel_dtw">Relative Pitch + DTW</option>
+          <option value="abs_dtw">Absolute Pitch + DTW</option>
+          <option value="rel_euclidean">Relative Pitch + Euclidean</option>
+        </select>
+        <label class="label">Số kết quả</label>
+        <select id="topK">
+          <option>3</option><option selected>5</option><option>10</option>
+        </select>
+        <button id="searchBtn" class="btn primary full">Phân tích & tìm kiếm</button>
+        <div id="status" class="status"></div>
+      </article>
+    </div>
+
+    <article class="card">
+      <div class="row-between">
+        <h2>Đường nét giai điệu truy vấn</h2>
+        <span class="badge">Cao độ tương đối</span>
+      </div>
+      <canvas id="queryCanvas" width="1000" height="260"></canvas>
+      <p class="footnote">Trục dọc: số bán cung tương đối so với cao độ trung vị của đoạn hát.</p>
+    </article>
+
+    <article class="card">
+      <div class="row-between">
+        <h2>Kết quả truy xuất</h2>
+        <span class="badge">Top-K</span>
+      </div>
+      <div id="results" class="emptybox">Chưa có kết quả.</div>
+    </article>
+
+    <article id="comparisonCard" class="card hidden">
+      <h2>So sánh đường nét giai điệu</h2>
+      <p id="comparisonTitle" class="muted"></p>
+      <canvas id="compareCanvas" width="1000" height="300"></canvas>
+      <div class="legend">
+        <span><i class="line q"></i> Truy vấn</span>
+        <span><i class="line r"></i> Bản tham chiếu</span>
+      </div>
+      <audio id="referenceAudio" controls class="audio"></audio>
+    </article>
+  </section>
+
+  <section id="libraryPane" class="pane">
+    <article class="card">
+      <div class="row-between">
+        <div>
+          <h2>Kho tư liệu hát Then</h2>
+          <p class="muted">Metadata phục vụ truy xuất và nghiên cứu nguồn gốc bản thu.</p>
+        </div>
+        <button id="refreshLibrary" class="btn">Làm mới</button>
+      </div>
+      <div class="table-wrap">
+        <table>
+          <thead><tr>
+            <th>Mã</th><th>Tên bản</th><th>Nhóm</th><th>Người hát</th>
+            <th>Địa phương</th><th>Năm</th><th>Nguồn</th>
+          </tr></thead>
+          <tbody id="libraryBody"></tbody>
+        </table>
+      </div>
+    </article>
+  </section>
+
+  <section id="researchPane" class="pane">
+    <article class="card">
+      <h2>Đánh giá các phương pháp</h2>
+      <p class="muted">
+        Kết quả được sinh tự động từ nhãn <b>variant_group</b>.
+        Đây là kiểm tra ban đầu; báo cáo chính thức vẫn cần thiết kế test tách theo người hát
+        và đánh giá chuyên gia.
+      </p>
+      <button id="loadEval" class="btn primary">Tải kết quả đánh giá</button>
+      <div id="evalBox" class="eval-grid"></div>
+    </article>
+
+    <article class="card">
+      <h2>Chỉ số nghiên cứu</h2>
+      <div class="metric-grid">
+        <div><b>Top-1 Accuracy</b><span>Làn điệu đúng đứng đầu</span></div>
+        <div><b>Recall@3</b><span>Có bản đúng trong 3 kết quả đầu</span></div>
+        <div><b>Recall@5</b><span>Có bản đúng trong 5 kết quả đầu</span></div>
+        <div><b>Expert agreement</b><span>Tương quan với đánh giá chuyên gia</span></div>
+      </div>
+    </article>
+  </section>
+
+  <section id="aboutPane" class="pane">
+    <article class="card">
+      <h2>Vấn đề nghiên cứu</h2>
+      <p>
+        HeritageTune nghiên cứu khả năng nhận diện và truy xuất các bản thể hiện có quan hệ
+        giai điệu trong hát Then khi khác người hát, tông giọng, tốc độ và điều kiện ghi âm.
+      </p>
+      <h3>Phương pháp HT-DTW</h3>
+      <p>
+        Mỗi bản thu được chuyển thành cao độ tương đối, biến thiên quãng và đại lượng nhịp
+        gần đúng, sau đó căn chỉnh theo thời gian bằng DTW.
+      </p>
+      <div class="formula">D = α·D<sub>pitch</sub> + β·D<sub>interval</sub> + γ·D<sub>rhythm</sub></div>
+      <h3>Nguyên tắc sử dụng</h3>
+      <p>
+        Hệ thống hỗ trợ chuyên gia tìm kiếm và đối chiếu tư liệu, không thay thế thẩm định
+        của nghệ nhân/chuyên gia âm nhạc. Similarity trên giao diện là chỉ số trực quan,
+        không phải xác suất.
+      </p>
+    </article>
+  </section>
+</main>
+
+<footer><div class="container">HeritageTune 1.1.3 • Netlify + Render • Dự án KHKT học sinh • Hát Then</div></footer>
+<script src="/app.js"></script>
+</body>
+</html>
